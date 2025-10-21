@@ -9,12 +9,18 @@
     },
     {
       "name": "adminPassword",
-      "type": "securestring"
+      "type": "securestring",
+      "defaultValue": "TempPass123!" 
     },
     {
       "name": "vmName",
       "type": "string",
-      "defaultValue": "poc-vm"
+      "defaultValue": "poc-vm-test1"
+    },
+    {
+      "name": "vmSize",
+      "type": "string",
+      "defaultValue": "Standard_B1s"
     }
   ],
   "pages": [
@@ -42,9 +48,28 @@
           "label": "VM name",
           "toolTip": "Name of the virtual machine",
           "constraints": { "required": true }
+        },
+        {
+          "name": "vmSize",
+          "type": "Microsoft.Common.DropDown",
+          "label": "Virtual Machine Size",
+          "toolTip": "Select the VM size",
+          "defaultValue": "Standard_B1s",
+          "constraints": {
+            "allowedValues": [
+              { "label": "B1s (1 vCPU, 1 GiB RAM)", "value": "Standard_B1s" },
+              { "label": "B2s (2 vCPU, 4 GiB RAM)", "value": "Standard_B2s" },
+              { "label": "D2s_v3 (2 vCPU, 8 GiB RAM)", "value": "Standard_D2s_v3" }
+            ],
+            "required": true
+          }
         }
       ]
     }
   ],
-  "outputs": {}
+  "outputs": {
+    "vmName": "[parameters('vmName')]",
+    "adminUsername": "[parameters('adminUsername')]",
+    "vmSize": "[parameters('vmSize')]"
+  }
 }
