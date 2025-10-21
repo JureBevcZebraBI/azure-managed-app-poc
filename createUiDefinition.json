@@ -1,75 +1,50 @@
 {
-  "handler": "Azure",
-  "version": "1.0.0.0",
-  "parameters": [
-    {
-      "name": "adminUsername",
-      "type": "string",
-      "defaultValue": "azureuser"
-    },
-    {
-      "name": "adminPassword",
-      "type": "securestring",
-      "defaultValue": "TempPass123!" 
-    },
-    {
-      "name": "vmName",
-      "type": "string",
-      "defaultValue": "poc-vm-test1"
-    },
-    {
-      "name": "vmSize",
-      "type": "string",
-      "defaultValue": "Standard_B1s"
-    }
-  ],
-  "pages": [
-    {
-      "name": "main",
-      "label": "VM Settings",
-      "elements": [
-        {
-          "name": "adminUsername",
-          "type": "Microsoft.Common.TextBox",
-          "label": "Admin username",
-          "toolTip": "Enter the VM admin username",
-          "constraints": { "required": true }
-        },
-        {
-          "name": "adminPassword",
-          "type": "Microsoft.Common.PasswordBox",
-          "label": "Admin password",
-          "toolTip": "Enter a secure password",
-          "constraints": { "required": true }
-        },
-        {
-          "name": "vmName",
-          "type": "Microsoft.Common.TextBox",
-          "label": "VM name",
-          "toolTip": "Name of the virtual machine",
-          "constraints": { "required": true }
-        },
-        {
-          "name": "vmSize",
-          "type": "Microsoft.Common.DropDown",
-          "label": "Virtual Machine Size",
-          "toolTip": "Select the VM size",
-          "defaultValue": "Standard_B1s",
-          "constraints": {
-            "allowedValues": [
-              { "label": "B1s (1 vCPU, 1 GiB RAM)", "value": "Standard_B1s" },
-              { "label": "B2s (2 vCPU, 4 GiB RAM)", "value": "Standard_B2s" },
-              { "label": "D2s_v3 (2 vCPU, 8 GiB RAM)", "value": "Standard_D2s_v3" }
-            ],
-            "required": true
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "basics": [],
+    "steps": [
+      {
+        "name": "vmSettings",
+        "label": "VM Settings",
+        "elements": [
+          {
+            "name": "adminUsername",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Admin Username",
+            "toolTip": "Enter the VM admin username",
+            "constraints": {
+              "required": true
+            },
+            "defaultValue": "azureuser"
+          },
+          {
+            "name": "adminPassword",
+            "type": "Microsoft.Common.PasswordBox",
+            "label": "Admin Password",
+            "toolTip": "Enter a secure password",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "vmName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "VM Name",
+            "toolTip": "Name of the virtual machine",
+            "constraints": {
+              "required": true
+            },
+            "defaultValue": "poc-vm"
           }
-        }
-      ]
+        ]
+      }
+    ],
+    "outputs": {
+      "adminUsername": "[steps('vmSettings').adminUsername]",
+      "adminPassword": "[steps('vmSettings').adminPassword]",
+      "vmName": "[steps('vmSettings').vmName]"
     }
-  ],
-  "outputs": {
-    "vmName": "[parameters('vmName')]",
-    "adminUsername": "[parameters('adminUsername')]",
-    "vmSize": "[parameters('vmSize')]"
   }
 }
