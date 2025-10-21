@@ -1,0 +1,50 @@
+{
+  "handler": "Azure",
+  "version": "1.0.0.0",
+  "parameters": [
+    {
+      "name": "adminUsername",
+      "type": "string",
+      "defaultValue": "azureuser"
+    },
+    {
+      "name": "adminPassword",
+      "type": "securestring"
+    },
+    {
+      "name": "vmName",
+      "type": "string",
+      "defaultValue": "poc-vm"
+    }
+  ],
+  "pages": [
+    {
+      "name": "main",
+      "label": "VM Settings",
+      "elements": [
+        {
+          "name": "adminUsername",
+          "type": "Microsoft.Common.TextBox",
+          "label": "Admin username",
+          "toolTip": "Enter the VM admin username",
+          "constraints": { "required": true }
+        },
+        {
+          "name": "adminPassword",
+          "type": "Microsoft.Common.PasswordBox",
+          "label": "Admin password",
+          "toolTip": "Enter a secure password",
+          "constraints": { "required": true }
+        },
+        {
+          "name": "vmName",
+          "type": "Microsoft.Common.TextBox",
+          "label": "VM name",
+          "toolTip": "Name of the virtual machine",
+          "constraints": { "required": true }
+        }
+      ]
+    }
+  ],
+  "outputs": {}
+}
