@@ -45,6 +45,7 @@
                 "[parameters('customerAllowedIp')]"
               ],
               "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
               "destinationPortRange": "80"
             }
           }
