@@ -70,7 +70,10 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'vmNsg')]"
+      ]
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
