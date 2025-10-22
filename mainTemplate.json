@@ -2,69 +2,146 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "adminUsername": { "type": "string" },
-    "adminPassword": { "type": "securestring" },
-    "vmName": { "type": "string", "defaultValue": "poc-vm" },
-    "vmSize": { "type": "string", "defaultValue": "Standard_B1s" }
+    "customerAllowedIp": {
+      "type": "string",
+      "metadata": {
+        "description": "Customer IP address allowed to access the VM"
+      }
+    },
+    "repoAccessKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Access key for private repo (visible only to provider)"
+      }
+    },
+    "providerFixedIp": {
+      "type": "string",
+      "defaultValue": "94.140.71.34",
+      "metadata": {
+        "description": "Provider's fixed public IP for VM access"
+      }
+    }
   },
   "resources": [
     {
-      "type": "Microsoft.Network/virtualNetworks",
+      "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2017-06-01",
-      "name": "[concat('vnet-', uniqueString(resourceGroup().id))]",
+      "name": "vmPublicIp",
       "location": "[resourceGroup().location]",
       "properties": {
-        "addressSpace": { "addressPrefixes": ["10.0.0.0/16"] },
-        "subnets": [{ "name": "default", "properties": { "addressPrefix": "10.0.0.0/24" } }]
+        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
-      "type": "Microsoft.Network/publicIPAddresses",
+      "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2017-06-01",
-      "name": "[concat(parameters('vmName'),'-pip')]",
+      "name": "vmNsg",
       "location": "[resourceGroup().location]",
-      "properties": { "publicIPAllocationMethod": "Dynamic" }
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-provider-and-customer",
+            "properties": {
+              "priority": 100,
+              "direction": "Inbound",
+              "access": "Allow",
+              "protocol": "*",
+              "sourceAddressPrefixes": [
+                "[parameters('providerFixedIp')]",
+                "[parameters('customerAllowedIp')]"
+              ],
+              "destinationPortRange": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2017-06-01",
+      "name": "vmVnet",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": { "addressPrefixes": ["10.0.0.0/16"] },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'vmNsg')]"
+              }
+            }
+          }
+        ]
+      }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2017-06-01",
-      "name": "[concat(parameters('vmName'),'-nic')]",
+      "name": "vmNic",
       "location": "[resourceGroup().location]",
-      "dependsOn": ["[resourceId('Microsoft.Network/virtualNetworks',concat('vnet-', uniqueString(resourceGroup().id)))]",
-                    "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('vmName'),'-pip'))]"],
+      "dependsOn": [
+        "vmVnet",
+        "vmPublicIp"
+      ],
       "properties": {
-        "ipConfigurations": [{
-          "name": "ipconfig1",
-          "properties": {
-            "subnet": { "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', concat('vnet-', uniqueString(resourceGroup().id)), 'default')]" },
-            "publicIPAddress": { "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'), '-pip'))]" }
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vmVnet', 'default')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'vmPublicIp')]"
+              }
+            }
           }
-        }]
+        ]
       }
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2021-07-01",
-      "name": "[parameters('vmName')]",
+      "apiVersion": "2017-12-01",
+      "name": "managedAppVm",
       "location": "[resourceGroup().location]",
-      "dependsOn": ["[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'),'-nic'))]"],
+      "dependsOn": [
+        "vmNic"
+      ],
       "properties": {
-        "hardwareProfile": { "vmSize": "[parameters('vmSize')]" },
+        "hardwareProfile": { "vmSize": "Standard_B2s" },
         "osProfile": {
-          "computerName": "[parameters('vmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "computerName": "managedVm",
+          "adminUsername": "azureuser",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true
+          },
+          "customData": "[base64('#!/bin/bash\nsudo apt-get update -y\nsudo apt-get install -y nginx\nsudo systemctl enable nginx\nsudo systemctl start nginx')]"
         },
         "storageProfile": {
-          "imageReference": { "publisher": "Canonical", "offer": "UbuntuServer", "sku": "18.04-LTS", "version": "latest" }
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "0001-com-ubuntu-server-focal",
+            "sku": "20_04-lts",
+            "version": "latest"
+          }
         },
         "networkProfile": {
-          "networkInterfaces": [{ "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'),'-nic'))]" }]
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'vmNic')]"
+            }
+          ]
         }
       }
     }
   ],
   "outputs": {
-    "vmId": { "type": "string", "value": "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]" }
+    "vmPublicIp": {
+      "type": "string",
+      "value": "[reference('vmPublicIp').ipAddress]"
+    }
   }
 }

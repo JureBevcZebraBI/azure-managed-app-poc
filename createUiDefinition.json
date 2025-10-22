@@ -3,48 +3,25 @@
   "handler": "Microsoft.Azure.CreateUIDef",
   "version": "0.1.2-preview",
   "parameters": {
-    "basics": [],
-    "steps": [
+    "config": {
+      "basics": {}
+    },
+    "basics": [
       {
-        "name": "vmSettings",
-        "label": "VM Settings",
-        "elements": [
-          {
-            "name": "adminUsername",
-            "type": "Microsoft.Common.TextBox",
-            "label": "Admin Username",
-            "toolTip": "Enter the VM admin username",
-            "constraints": {
-              "required": true
-            },
-            "defaultValue": "azureuser"
-          },
-          {
-            "name": "adminPassword",
-            "type": "Microsoft.Common.PasswordBox",
-            "label": "Admin Password",
-            "toolTip": "Enter a secure password",
-            "constraints": {
-              "required": true
-            }
-          },
-          {
-            "name": "vmName",
-            "type": "Microsoft.Common.TextBox",
-            "label": "VM Name",
-            "toolTip": "Name of the virtual machine",
-            "constraints": {
-              "required": true
-            },
-            "defaultValue": "poc-vm"
-          }
-        ]
+        "name": "customerAllowedIp",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Customer IP Address",
+        "defaultValue": "",
+        "toolTip": "Enter your public IP address to allow access to the VM.",
+        "constraints": {
+          "required": true,
+          "regex": "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
+        }
       }
     ],
+    "steps": [],
     "outputs": {
-      "adminUsername": "[steps('vmSettings').adminUsername]",
-      "adminPassword": "[steps('vmSettings').adminPassword]",
-      "vmName": "[steps('vmSettings').vmName]"
+      "customerAllowedIp": "[basics('customerAllowedIp')]"
     }
   }
 }
