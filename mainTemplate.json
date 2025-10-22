@@ -148,7 +148,7 @@
   "outputs": {
     "vmPublicIp": {
       "type": "string",
-      "value": "[reference('vmPublicIp').ipAddress]"
+      "value": "[reference('vmPublicIp', '2017-06-01').ipAddress]"
     }
   }
 }
