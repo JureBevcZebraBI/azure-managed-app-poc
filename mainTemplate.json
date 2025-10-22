@@ -8,12 +8,6 @@
         "description": "Customer IP address allowed to access the VM"
       }
     },
-    "repoAccessKey": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Access key for private repo (visible only to provider)"
-      }
-    },
     "providerFixedIp": {
       "type": "string",
       "defaultValue": "94.140.71.34",
