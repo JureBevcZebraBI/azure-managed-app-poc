@@ -6,22 +6,8 @@
     "config": {
       "basics": {}
     },
-    "basics": [
-      {
-        "name": "customerAllowedIp",
-        "type": "Microsoft.Common.TextBox",
-        "label": "Customer IP Address",
-        "defaultValue": "",
-        "toolTip": "Enter your public IP address to allow access to the VM.",
-        "constraints": {
-          "required": true,
-          "regex": "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
-        }
-      }
-    ],
+    "basics": [],
     "steps": [],
-    "outputs": {
-      "customerAllowedIp": "[basics('customerAllowedIp')]"
-    }
+    "outputs": {}
   }
 }
