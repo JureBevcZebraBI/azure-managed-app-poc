@@ -1,30 +1,14 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {
-    "customerAllowedIp": {
-      "type": "string",
-      "metadata": {
-        "description": "Customer IP address allowed to access the VM"
-      }
-    },
-    "providerFixedIp": {
-      "type": "string",
-      "defaultValue": "94.140.71.34",
-      "metadata": {
-        "description": "Provider's fixed public IP for VM access"
-      }
-    }
-  },
+  "parameters": {},
   "resources": [
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2022-11-01",
       "name": "vmPublicIp",
       "location": "[resourceGroup().location]",
-      "sku": {
-        "name": "Standard"
-      },
+      "sku": { "name": "Standard" },
       "properties": {
         "publicIPAllocationMethod": "Static",
         "publicIPAddressVersion": "IPv4"
@@ -32,22 +16,19 @@
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2022-01-01",
       "name": "vmNsg",
       "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": [
           {
-            "name": "allow-provider-and-customer",
+            "name": "Allow-HTTP",
             "properties": {
               "priority": 100,
               "direction": "Inbound",
               "access": "Allow",
-              "protocol": "*",
-              "sourceAddressPrefixes": [
-                "[parameters('providerFixedIp')]",
-                "[parameters('customerAllowedIp')]"
-              ],
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
               "sourcePortRange": "*",
               "destinationAddressPrefix": "*",
               "destinationPortRange": "80"
@@ -58,7 +39,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2022-01-01",
       "name": "vmVnet",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -74,32 +55,25 @@
             }
           }
         ]
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', 'vmNsg')]"
-      ]
+      }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2022-01-01",
       "name": "vmNic",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "vmVnet",
-        "vmPublicIp"
+        "[resourceId('Microsoft.Network/virtualNetworks', 'vmVnet')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'vmPublicIp')]"
       ],
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
-              "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vmVnet', 'default')]"
-              },
+              "subnet": { "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vmVnet', 'default')]" },
               "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'vmPublicIp')]"
-              }
+              "publicIPAddress": { "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'vmPublicIp')]" }
             }
           }
         ]
@@ -107,28 +81,16 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2017-12-01",
-      "name": "managedAppVm",
+      "apiVersion": "2022-11-01",
+      "name": "managedVm",
       "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "vmNic"
-      ],
+      "dependsOn": ["vmNic"],
       "properties": {
         "hardwareProfile": { "vmSize": "Standard_B2s" },
         "osProfile": {
           "computerName": "managedVm",
           "adminUsername": "azureuser",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": true,
-            "ssh": {
-              "publicKeys": [
-                {
-                  "path": "/home/azureuser/.ssh/authorized_keys",
-                  "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDVj0OJI3Urz4QRohEnawvwoWipKsXwu8dTLVomtM0L9YEFG8m+bhWd/bvzFegi6XeGpj9CcJaqWFiVkEPRSzBK4KHYFwdJyZU9fyhs/w6OtDS/ajmHnTj9vUYOqLe8cqG8wlE0BLCSzIkODI0cBW8EboMZ/7wFH5YifIAM27f9iM9qSzScar4eY1SnRFZm16CEcxABXU+AdtMppSRiTw2jXHAWyxythoB8hb8xAm6b1lL7M+0YuhlXeSOUQeiz63REv7LPcMCgXF9uBjeqVp00Ewqd7yjQdmbCPemq7jgLBGix2/nsRVvn6fIDvfSLlZ8ETq3ZYJRS2z8mwhmAjOkobRJBPAFU7aVlxOAbl14MFRAo3Qa/5emLKNkKoFE1QDGVnLwioJZeACX+puGMajMh/CxWrVLpi8E+3quBW8wIQZ8auUtw9RLxziw0fBs9omsZBlZWVFTjpsi53LLJJx618xaslSFspCybZXRtIuCgPwhuk5ui0+lhBybSWejnCOU="
-                }
-              ]
-            }
-          },
+          "linuxConfiguration": { "disablePasswordAuthentication": true },
           "customData": "[base64('#!/bin/bash\nsudo apt-get update -y\nsudo apt-get install -y nginx\nsudo systemctl enable nginx\nsudo systemctl start nginx')]"
         },
         "storageProfile": {
@@ -141,13 +103,10 @@
         },
         "networkProfile": {
           "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'vmNic')]"
-            }
+            { "id": "[resourceId('Microsoft.Network/networkInterfaces', 'vmNic')]" }
           ]
         }
       }
     }
-  ],
-  "outputs": {}
+  ]
 }
