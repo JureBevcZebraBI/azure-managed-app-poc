@@ -90,7 +90,15 @@
         "osProfile": {
           "computerName": "managedVm",
           "adminUsername": "azureuser",
-          "linuxConfiguration": { "disablePasswordAuthentication": true },
+          "linuxConfiguration": { "disablePasswordAuthentication": true,
+          "ssh": {
+              "publicKeys": [
+                {
+                  "path": "/home/azureuser/.ssh/authorized_keys",
+                  "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDdummykeynotvalid"
+                }
+              ]
+          },
           "customData": "[base64('#!/bin/bash\nsudo apt-get update -y\nsudo apt-get install -y nginx\nsudo systemctl enable nginx\nsudo systemctl start nginx')]"
         },
         "storageProfile": {
