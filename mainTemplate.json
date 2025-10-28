@@ -98,7 +98,7 @@
             "publicKeys": [
               {
                 "path": "/home/azureuser/.ssh/authorized_keys",
-                "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDdummykeynotreal"
+                "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDC3mVq9tKp7wY8l7gq4s2FjzR1vKZpHc2u1yq0n5vLx0y7G4h2Qz9bHk6wYfJZr8uD1v3wKfN0sX2pLq7cM8nQx2bR5Zp9jK1uVt3eHq user@host"
               }
             ]
           }
