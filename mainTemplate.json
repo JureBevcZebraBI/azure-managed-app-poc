@@ -98,7 +98,7 @@
             "publicKeys": [
               {
                 "path": "/home/azureuser/.ssh/authorized_keys",
-                "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDC3mVq9tKp7wY8l7gq4s2FjzR1vKZpHc2u1yq0n5vLx0y7G4h2Qz9bHk6wYfJZr8uD1v3wKfN0sX2pLq7cM8nQx2bR5Zp9jK1uVt3eHq user@host"
+                "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDVj0OJI3Urz4QRohEnawvwoWipKsXwu8dTLVomtM0L9YEFG8m+bhWd/bvzFegi6XeGpj9CcJaqWFiVkEPRSzBK4KHYFwdJyZU9fyhs/w6OtDS/ajmHnTj9vUYOqLe8cqG8wlE0BLCSzIkODI0cBW8EboMZ/7wFH5YifIAM27f9iM9qSzScar4eY1SnRFZm16CEcxABXU+AdtMppSRiTw2jXHAWyxythoB8hb8xAm6b1lL7M+0YuhlXeSOUQeiz63REv7LPcMCgXF9uBjeqVp00Ewqd7yjQdmbCPemq7jgLBGix2/nsRVvn6fIDvfSLlZ8ETq3ZYJRS2z8mwhmAjOkobRJBPAFU7aVlxOAbl14MFRAo3Qa/5emLKNkKoFE1QDGVnLwioJZeACX+puGMajMh/CxWrVLpi8E+3quBW8wIQZ8auUtw9RLxziw0fBs9omsZBlZWVFTjpsi53LLJJx618xaslSFspCybZXRtIuCgPwhuk5ui0+lhBybSWejnCOU="
               }
             ]
           }
