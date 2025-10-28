@@ -42,6 +42,9 @@
       "apiVersion": "2022-01-01",
       "name": "vmVnet",
       "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'vmNsg')]"
+      ],
       "properties": {
         "addressSpace": { "addressPrefixes": ["10.0.0.0/16"] },
         "subnets": [
