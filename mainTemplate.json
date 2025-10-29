@@ -107,7 +107,7 @@
           "computerName": "managedVm",
           "adminUsername": "azureuser",
           "linuxConfiguration": { 
-            "disablePasswordAuthentication": true
+            "disablePasswordAuthentication": false
         },
           "customData": "[base64('#!/bin/bash\nsudo apt-get update -y\nsudo apt-get install -y nginx\nsudo systemctl enable nginx\nsudo systemctl start nginx')]"
         },
