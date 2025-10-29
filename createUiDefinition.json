@@ -6,7 +6,17 @@
     "config": {
       "basics": {}
     },
-    "basics": [],
+    "basics": [
+      {
+        "name": "adminPassword",
+        "type": "Microsoft.Common.Password",
+        "label": "VM Administrator Password",
+        "toolTip": "Enter the password for the Linux VM admin user.",
+        "constraints": {
+          "required": true
+        }
+      }
+    ],
     "steps": [],
     "outputs": {}
   }
