@@ -3,10 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
       "adminPassword": {
-        "type": "securestring",
-        "metadata": {
-          "description": "Password for the VM"
-        }
+        "type": "securestring"
       }
   },
   "resources": [

@@ -19,9 +19,7 @@
     ],
     "steps": [],
     "outputs": {
-        "parameters": {
-          "adminPassword": "[basics('adminPassword')]"
-        }
+      "adminPassword": "[basics('adminPassword')]"
     }
   }
 }
