@@ -18,6 +18,8 @@
       }
     ],
     "steps": [],
-    "outputs": {}
+    "outputs": {
+      "adminPassword": "[basics('adminPassword')]"
+    }
   }
 }
