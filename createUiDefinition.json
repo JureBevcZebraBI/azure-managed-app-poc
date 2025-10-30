@@ -10,11 +10,14 @@
       {
         "name": "adminPassword",
         "type": "Microsoft.Common.TextBox",
-        "label": "VM Administrator Password",
-        "toolTip": "Enter the password for the Linux VM admin user.",
+        "label": "Administrator password",
+        "toolTip": "Enter a strong password (min 12 chars, upper, lower, number, special).",
         "constraints": {
-          "required": true
-        }
+          "required": true,
+          "regex": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}\\[\\]:;\"'`~<>,.?/]).{12,}$",
+          "validationMessage": "Password must be at least 12 characters long and include upper, lower, number, and special character."
+        },
+        "visible": true
       }
     ],
     "steps": [],
