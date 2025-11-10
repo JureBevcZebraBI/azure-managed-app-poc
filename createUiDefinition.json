@@ -10,8 +10,8 @@
       {
         "name": "adminPassword",
         "type": "Microsoft.Common.TextBox",
-        "label": "Administrator password",
-        "toolTip": "Enter a strong password (min 12 chars, upper, lower, number, special).",
+        "label": "VM Administrator password",
+        "toolTip": "Please enter a strong password (min 12 chars, upper, lower, number, special).",
         "constraints": {
           "required": true,
           "regex": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}\\[\\]:;\"'`~<>,.?/]).{12,}$",
