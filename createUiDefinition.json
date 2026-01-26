@@ -3,41 +3,60 @@
   "handler": "Microsoft.Azure.CreateUIDef",
   "version": "0.1.2-preview",
   "parameters": {
+    "config": {
+      "basics": {}
+    },
     "basics": [
       {
         "name": "containerImage",
         "type": "Microsoft.Common.TextBox",
         "label": "Docker Image",
+        "toolTip": "e.g. myregistry.azurecr.io/myapp:latest",
         "defaultValue": "zebrabi.azurecr.io/dev-server:latest",
-        "constraints": { "required": true }
+        "constraints": {
+          "required": true
+        },
+        "visible": true
       },
       {
         "name": "redisUri",
         "type": "Microsoft.Common.TextBox",
         "label": "REDIS_URI",
         "defaultValue": "redis://myredis:6379",
-        "constraints": { "required": true }
+        "constraints": {
+          "required": true
+        },
+        "visible": true
       },
       {
         "name": "dbUri",
         "type": "Microsoft.Common.TextBox",
         "label": "DB_URI",
         "defaultValue": "postgres://mydb:5432",
-        "constraints": { "required": true }
+        "constraints": {
+          "required": true
+        },
+        "visible": true
       },
       {
         "name": "registryServer",
         "type": "Microsoft.Common.TextBox",
         "label": "Registry Server",
         "defaultValue": "https://zebrabi.azurecr.io",
-        "constraints": { "required": true }
+        "constraints": {
+          "required": true
+        },
+        "visible": true
       },
       {
         "name": "registryUsername",
         "type": "Microsoft.Common.TextBox",
         "label": "Registry Username",
         "defaultValue": "zebrabi",
-        "constraints": { "required": true }
+        "constraints": {
+          "required": true
+        },
+        "visible": true
       },
       {
         "name": "registryPassword",
@@ -46,8 +65,14 @@
           "password": "Registry Password",
           "confirmPassword": "Confirm Password"
         },
-        "constraints": { "required": true },
-        "options": { "hideConfirmation": true }
+        "toolTip": "Enter the registry login password",
+        "constraints": {
+          "required": true
+        },
+        "options": {
+          "hideConfirmation": true
+        },
+        "visible": true
       }
     ],
     "steps": [],
