@@ -1,47 +1,56 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.json#",
   "handler": "Microsoft.Azure.CreateUIDef",
   "version": "0.1.2-preview",
   "parameters": {
-    "config": { "basics": {} },
+    "config": { "basics": [] },
     "basics": [
       {
         "name": "containerImage",
         "type": "Microsoft.Common.TextBox",
         "label": "Docker Image",
         "toolTip": "e.g. myregistry.azurecr.io/myapp:latest",
+        "defaultValue": "zebrabi.azurecr.io/dev-server:latest",
         "constraints": { "required": true }
       },
       {
         "name": "redisUri",
         "type": "Microsoft.Common.TextBox",
         "label": "REDIS_URI",
+        "defaultValue": "redis://myredis:6379",
         "constraints": { "required": true }
       },
       {
         "name": "dbUri",
         "type": "Microsoft.Common.TextBox",
         "label": "DB_URI",
+        "defaultValue": "postgres://mydb:5432",
         "constraints": { "required": true }
       },
       {
         "name": "registryServer",
         "type": "Microsoft.Common.TextBox",
         "label": "Registry Server",
-        "toolTip": "e.g. myregistry.azurecr.io",
+        "defaultValue": "https://zebrabi.azurecr.io",
         "constraints": { "required": true }
       },
       {
         "name": "registryUsername",
         "type": "Microsoft.Common.TextBox",
         "label": "Registry Username",
+        "defaultValue": "zebrabi",
         "constraints": { "required": true }
       },
       {
         "name": "registryPassword",
-        "type": "Microsoft.Common.SecureString",
-        "label": "Registry Password",
-        "constraints": { "required": true }
+        "type": "Microsoft.Common.PasswordBox",
+        "label": {
+          "password": "Registry Password",
+          "confirmPassword": "Confirm Password"
+        },
+        "toolTip": "Enter the registry login password",
+        "constraints": { "required": true },
+        "options": { "hideConfirmation": true }
       }
     ],
     "steps": [],
