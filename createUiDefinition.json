@@ -3,26 +3,54 @@
   "handler": "Microsoft.Azure.CreateUIDef",
   "version": "0.1.2-preview",
   "parameters": {
-    "config": {
-      "basics": {}
-    },
+    "config": { "basics": {} },
     "basics": [
       {
-        "name": "adminPassword",
+        "name": "containerImage",
         "type": "Microsoft.Common.TextBox",
-        "label": "VM Administrator password",
-        "toolTip": "Please enter a strong password (min 12 chars, upper, lower, number, special).",
-        "constraints": {
-          "required": true,
-          "regex": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}\\[\\]:;\"'`~<>,.?/]).{12,}$",
-          "validationMessage": "Password must be at least 12 characters long and include upper, lower, number, and special character."
-        },
-        "visible": true
+        "label": "Docker Image",
+        "toolTip": "e.g. myregistry.azurecr.io/myapp:latest",
+        "constraints": { "required": true }
+      },
+      {
+        "name": "redisUri",
+        "type": "Microsoft.Common.TextBox",
+        "label": "REDIS_URI",
+        "constraints": { "required": true }
+      },
+      {
+        "name": "dbUri",
+        "type": "Microsoft.Common.TextBox",
+        "label": "DB_URI",
+        "constraints": { "required": true }
+      },
+      {
+        "name": "registryServer",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Registry Server",
+        "toolTip": "e.g. myregistry.azurecr.io",
+        "constraints": { "required": true }
+      },
+      {
+        "name": "registryUsername",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Registry Username",
+        "constraints": { "required": true }
+      },
+      {
+        "name": "registryPassword",
+        "type": "Microsoft.Common.SecureString",
+        "label": "Registry Password",
+        "constraints": { "required": true }
       }
     ],
     "steps": [],
     "outputs": {
-      "adminPassword": "[basics('adminPassword')]"
+      "containerImage": "[basics('containerImage')]",
+      "redisUri": "[basics('redisUri')]",
+      "dbUri": "[basics('dbUri')]",
+      "registryServer": "[basics('registryServer')]",
+      "registryUsername": "[basics('registryUsername')]"
     }
   }
 }

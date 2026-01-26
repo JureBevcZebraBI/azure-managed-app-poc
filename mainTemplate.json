@@ -2,119 +2,50 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-      "adminPassword": {
-        "type": "securestring"
-      }
+    "containerImage": { "type": "string" },
+    "redisUri": { "type": "string" },
+    "dbUri": { "type": "string" },
+    "registryServer": { "type": "string" },
+    "registryUsername": { "type": "string" },
+    "registryPassword": { "type": "securestring" }
   },
   "resources": [
     {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2022-11-01",
-      "name": "vmPublicIp",
-      "location": "[resourceGroup().location]",
-      "sku": { "name": "Standard" },
-      "properties": {
-        "publicIPAllocationMethod": "Static",
-        "publicIPAddressVersion": "IPv4"
-      }
-    },
-    {
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2022-01-01",
-      "name": "vmNsg",
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2023-05-01",
+      "name": "managedapp-container",
       "location": "[resourceGroup().location]",
       "properties": {
-        "securityRules": [
+        "osType": "Linux",
+        "imageRegistryCredentials": [
           {
-            "name": "Allow-HTTP",
+            "server": "[parameters('registryServer')]",
+            "username": "[parameters('registryUsername')]",
+            "password": "[parameters('registryPassword')]"
+          }
+        ],
+        "containers": [
+          {
+            "name": "app",
             "properties": {
-              "priority": 100,
-              "direction": "Inbound",
-              "access": "Allow",
-              "protocol": "Tcp",
-              "sourceAddressPrefix": "*",
-              "sourcePortRange": "*",
-              "destinationAddressPrefix": "*",
-              "destinationPortRange": "80"
+              "image": "[parameters('containerImage')]",
+              "resources": {
+                "requests": {
+                  "cpu": 1,
+                  "memoryInGb": 1.5
+                }
+              },
+              "environmentVariables": [
+                { "name": "REDIS_URI", "value": "[parameters('redisUri')]" },
+                { "name": "DB_URI", "value": "[parameters('dbUri')]" }
+              ],
+              "ports": [{ "port": 80 }]
             }
           }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2022-01-01",
-      "name": "vmVnet",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', 'vmNsg')]"
-      ],
-      "properties": {
-        "addressSpace": { "addressPrefixes": ["10.0.0.0/16"] },
-        "subnets": [
-          {
-            "name": "default",
-            "properties": {
-              "addressPrefix": "10.0.1.0/24",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'vmNsg')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2022-01-01",
-      "name": "vmNic",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', 'vmVnet')]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', 'vmPublicIp')]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "subnet": { "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vmVnet', 'default')]" },
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": { "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'vmPublicIp')]" }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2022-11-01",
-      "name": "managedVm",
-      "location": "[resourceGroup().location]",
-      "dependsOn": ["vmNic"],
-      "properties": {
-        "hardwareProfile": { "vmSize": "Standard_B2s" },
-        "osProfile": {
-          "computerName": "managedVm",
-          "adminUsername": "azureuser",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": { 
-            "disablePasswordAuthentication": false
-        },
-          "customData": "[base64('#!/bin/bash\nsudo apt-get update -y\nsudo apt-get install -y nginx\nsudo systemctl enable nginx\nsudo systemctl start nginx')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "Canonical",
-            "offer": "0001-com-ubuntu-server-focal",
-            "sku": "20_04-lts",
-            "version": "latest"
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            { "id": "[resourceId('Microsoft.Network/networkInterfaces', 'vmNic')]" }
-          ]
+        ],
+        "ipAddress": {
+          "type": "Public",
+          "ports": [{ "protocol": "Tcp", "port": 80 }]
         }
       }
     }
