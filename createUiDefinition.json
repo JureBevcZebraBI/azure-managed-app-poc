@@ -53,14 +53,14 @@
         "options": { "hideConfirmation": true }
       }
     ],
-    "steps": [],
-    "parameterOverrides": {
-      "containerImage": "[basics('containerImage')]",
-      "redisUri": "[basics('redisUri')]",
-      "dbUri": "[basics('dbUri')]",
-      "registryServer": "[basics('registryServer')]",
-      "registryUsername": "[basics('registryUsername')]",
-      "registryPassword": "[basics('registryPassword')]"
-    }
+    "steps": []
+  },
+  "parameterOverrides": {
+    "containerImage": "[basics('containerImage')]",
+    "redisUri": "[basics('redisUri')]",
+    "dbUri": "[basics('dbUri')]",
+    "registryServer": "[basics('registryServer')]",
+    "registryUsername": "[basics('registryUsername')]",
+    "registryPassword": "[basics('registryPassword')]"
   }
 }
