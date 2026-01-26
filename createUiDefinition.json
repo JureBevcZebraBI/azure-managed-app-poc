@@ -46,11 +46,11 @@
     ],
     "steps": [],
     "outputs": {
-      "containerImage": "[basics('containerImage')]",
-      "redisUri": "[basics('redisUri')]",
-      "dbUri": "[basics('dbUri')]",
-      "registryServer": "[basics('registryServer')]",
-      "registryUsername": "[basics('registryUsername')]"
+      "containerImage": "[parameters('containerImage')]",
+      "redisUri": "[parameters('redisUri')]",
+      "dbUri": "[parameters('dbUri')]",
+      "registryServer": "[parameters('registryServer')]",
+      "registryUsername": "[parameters('registryUsername')]"
     }
   }
 }
