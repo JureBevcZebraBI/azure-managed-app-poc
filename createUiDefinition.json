@@ -59,7 +59,8 @@
       "redisUri": "[parameters('redisUri')]",
       "dbUri": "[parameters('dbUri')]",
       "registryServer": "[parameters('registryServer')]",
-      "registryUsername": "[parameters('registryUsername')]"
+      "registryUsername": "[parameters('registryUsername')]",
+      "registryPassword": "[parameters('registryPassword')]"
     }
   }
 }
