@@ -39,13 +39,21 @@
                 { "name": "REDIS_URI", "value": "[parameters('redisUri')]" },
                 { "name": "DB_URI", "value": "[parameters('dbUri')]" }
               ],
-              "ports": [{ "port": 80 }]
+              "ports": [
+                { "port": 80 },
+                { "port": 8000 },
+                { "port": 60006 }
+              ]
             }
           }
         ],
         "ipAddress": {
           "type": "Public",
-          "ports": [{ "protocol": "Tcp", "port": 80 }]
+          "ports": [
+            { "protocol": "Tcp", "port": 80 },
+            { "protocol": "Tcp", "port": 8000 },
+            { "protocol": "Tcp", "port": 60006 }
+          ]
         }
       }
     }

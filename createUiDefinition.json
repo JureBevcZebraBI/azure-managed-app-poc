@@ -42,7 +42,7 @@
         "name": "registryServer",
         "type": "Microsoft.Common.TextBox",
         "label": "Registry Server",
-        "defaultValue": "https://zebrabi.azurecr.io",
+        "defaultValue": "zebrabi.azurecr.io",
         "constraints": {
           "required": true
         },
