@@ -54,7 +54,7 @@
       }
     ],
     "steps": [],
-    "outputs": {
+    "parameterOverrides": {
       "containerImage": "[basics('containerImage')]",
       "redisUri": "[basics('redisUri')]",
       "dbUri": "[basics('dbUri')]",
