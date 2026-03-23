@@ -1,36 +1,45 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-# --- CONFIG (injected via ARM or replace manually) ---
-CONTAINER_IMAGE="${CONTAINER_IMAGE}"
-REDIS_URI="${REDIS_URI}"
-DB_URI="${DB_URI}"
-REGISTRY_SERVER="${REGISTRY_SERVER}"
-REGISTRY_USERNAME="${REGISTRY_USERNAME}"
-REGISTRY_PASSWORD="${REGISTRY_PASSWORD}"
+echo "=== Starting setup ==="
 
-# --- Install Docker ---
-apt-get update
-apt-get install -y docker.io
+# Install Docker if missing
+if ! command -v docker >/dev/null 2>&1; then
+  apt-get update
+  apt-get install -y docker.io
+  systemctl enable docker
+  systemctl start docker
+fi
 
-systemctl enable docker
-systemctl start docker
+mkdir -p /opt/app
 
-# --- Login to registry ---
-echo "$REGISTRY_PASSWORD" | docker login $REGISTRY_SERVER -u $REGISTRY_USERNAME --password-stdin
+# Write .env file
+cat <<EOF > /opt/app/.env
+REDIS_URI=${REDIS_URI}
+DB_URI=${DB_URI}
+EOF
 
-# --- Pull image ---
-docker pull $CONTAINER_IMAGE
+# Login to registry
+echo "$REGISTRY_PASSWORD" | docker login "$REGISTRY_SERVER" -u "$REGISTRY_USERNAME" --password-stdin
 
-# --- Run container (privileged + docker socket) ---
+# Pull the image
+docker pull "$CONTAINER_IMAGE"
+
+# Remove existing container if exists
+if docker ps -a --format '{{.Names}}' | grep -q '^app$'; then
+  docker rm -f app
+fi
+
+# Run container
 docker run -d \
   --name app \
   --restart always \
   --privileged \
   -v /var/run/docker.sock:/var/run/docker.sock \
+  --env-file /opt/app/.env \
   -p 80:80 \
   -p 8000:8000 \
   -p 60006:60006 \
-  -e REDIS_URI="$REDIS_URI" \
-  -e DB_URI="$DB_URI" \
-  $CONTAINER_IMAGE
+  "$CONTAINER_IMAGE"
+
+echo "=== Setup complete ==="
