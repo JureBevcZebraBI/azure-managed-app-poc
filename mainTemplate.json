@@ -42,7 +42,15 @@
       "properties": {
         "addressSpace": { "addressPrefixes": ["10.0.0.0/16"] },
         "subnets": [
-          { "name": "default", "properties": { "addressPrefix": "10.0.0.0/24", "networkSecurityGroup": { "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmName'), '-nsg'))]" } } }
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmName'), '-nsg'))]"
+              }
+            }
+          }
         ]
       }
     },
@@ -57,7 +65,17 @@
       ],
       "properties": {
         "ipConfigurations": [
-          { "name": "ipconfig", "properties": { "subnet": { "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', concat(parameters('vmName'), '-vnet'), 'default')]" }, "publicIPAddress": { "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'), '-pip'))]" } } }
+          {
+            "name": "ipconfig",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', concat(parameters('vmName'), '-vnet'), 'default')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'), '-pip'))]"
+              }
+            }
+          }
         ]
       }
     },
@@ -77,10 +95,21 @@
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
-          "imageReference": { "publisher": "Canonical", "offer": "0001-com-ubuntu-server-jammy", "sku": "22_04-lts", "version": "latest" },
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "0001-com-ubuntu-server-jammy",
+            "sku": "22_04-lts",
+            "version": "latest"
+          },
           "osDisk": { "createOption": "FromImage" }
         },
-        "networkProfile": { "networkInterfaces": [ { "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'), '-nic'))]" } ] }
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'), '-nic'))]"
+            }
+          ]
+        }
       }
     },
     {
@@ -88,7 +117,9 @@
       "apiVersion": "2023-03-01",
       "name": "[concat(parameters('vmName'), '/customScript')]",
       "location": "[resourceGroup().location]",
-      "dependsOn": [ "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]" ],
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+      ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -96,18 +127,8 @@
         "settings": {
           "fileUris": [
             "https://raw.githubusercontent.com/JureBevcZebraBI/azure-managed-app-poc/refs/heads/main/setup.sh"
-          ]
-        },
-        "protectedSettings": {
-          "commandToExecute": "bash setup.sh",
-          "environmentVariables": [
-            { "name": "CONTAINER_IMAGE", "value": "[parameters('containerImage')]" },
-            { "name": "REDIS_URI", "value": "[parameters('redisUri')]" },
-            { "name": "DB_URI", "value": "[parameters('dbUri')]" },
-            { "name": "REGISTRY_SERVER", "value": "[parameters('registryServer')]" },
-            { "name": "REGISTRY_USERNAME", "value": "[parameters('registryUsername')]" },
-            { "name": "REGISTRY_PASSWORD", "value": "[parameters('registryPassword')]" }
-          ]
+          ],
+          "commandToExecute": "[concat('bash setup.sh \"', parameters('containerImage'), '\" \"', parameters('redisUri'), '\" \"', parameters('dbUri'), '\" \"', parameters('registryServer'), '\" \"', parameters('registryUsername'), '\" \"', parameters('registryPassword'), '\"')]"
         }
       }
     }
