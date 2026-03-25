@@ -12,11 +12,20 @@ REGISTRY_PASSWORD="$6"
 
 echo "=== Starting setup ==="
 
+# --- ADD THIS BLOCK (fix dpkg timing issue) ---
+echo "Waiting for apt/dpkg..."
+while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+  sleep 2
+done
+
+dpkg --configure -a || true
+# ---------------------------------------------
+
 # Basic packages + ensure repo works
 apt-get update
 apt-get install -y software-properties-common
 
-# Ensure universe repo (fixes docker.io not found)
+# Ensure universe repo
 add-apt-repository -y universe || true
 apt-get update
 
