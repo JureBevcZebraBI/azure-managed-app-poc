@@ -39,6 +39,9 @@
       "apiVersion": "2023-02-01",
       "name": "[concat(parameters('vmName'), '-vnet')]",
       "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmName'), '-nsg'))]"
+      ],
       "properties": {
         "addressSpace": { "addressPrefixes": ["10.0.0.0/16"] },
         "subnets": [
