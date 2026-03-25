@@ -5,9 +5,7 @@
     "vmName": { "type": "string", "defaultValue": "docker-vm" },
     "adminUsername": { "type": "string" },
     "adminPassword": { "type": "securestring" },
-
     "containerImage": { "type": "string" },
-    "redisUri": { "type": "string" },
     "dbUri": { "type": "string" },
     "registryServer": { "type": "string" },
     "registryUsername": { "type": "string" },
@@ -131,7 +129,7 @@
           "fileUris": [
             "https://raw.githubusercontent.com/JureBevcZebraBI/azure-managed-app-poc/refs/heads/main/setup.sh"
           ],
-          "commandToExecute": "[concat('bash setup.sh \"', parameters('containerImage'), '\" \"', parameters('redisUri'), '\" \"', parameters('dbUri'), '\" \"', parameters('registryServer'), '\" \"', parameters('registryUsername'), '\" \"', parameters('registryPassword'), '\"')]"
+          "commandToExecute": "[concat('bash setup.sh \"', parameters('containerImage'), '\" \"', parameters('dbUri'), '\" \"', parameters('registryServer'), '\" \"', parameters('registryUsername'), '\" \"', parameters('registryPassword'), '\"')]"
         }
       }
     }

@@ -14,7 +14,6 @@
         "constraints": { "required": true }
       },
       { "name": "containerImage", "type": "Microsoft.Common.TextBox", "label": "Docker Image", "defaultValue": "zebrabi.azurecr.io/dev-server:latest", "constraints": { "required": true } },
-      { "name": "redisUri", "type": "Microsoft.Common.TextBox", "label": "REDIS_URI", "defaultValue": "redis://myredis:6379", "constraints": { "required": true } },
       { "name": "dbUri", "type": "Microsoft.Common.TextBox", "label": "DB_URI", "defaultValue": "postgres://mydb:5432", "constraints": { "required": true } },
       { "name": "registryServer", "type": "Microsoft.Common.TextBox", "label": "Registry Server", "defaultValue": "zebrabi.azurecr.io", "constraints": { "required": true } },
       { "name": "registryUsername", "type": "Microsoft.Common.TextBox", "label": "Registry Username", "defaultValue": "zebrabi", "constraints": { "required": true } },
@@ -32,7 +31,6 @@
       "adminUsername": "[basics('adminUsername')]",
       "adminPassword": "[basics('adminPassword')]",
       "containerImage": "[basics('containerImage')]",
-      "redisUri": "[basics('redisUri')]",
       "dbUri": "[basics('dbUri')]",
       "registryServer": "[basics('registryServer')]",
       "registryUsername": "[basics('registryUsername')]",

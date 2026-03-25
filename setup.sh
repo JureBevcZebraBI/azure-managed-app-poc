@@ -12,49 +12,48 @@ REGISTRY_PASSWORD="$6"
 
 echo "=== Starting setup ==="
 
-# --- ADD THIS BLOCK (fix dpkg timing issue) ---
-echo "Waiting for apt/dpkg..."
-while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-  sleep 2
-done
-
-dpkg --configure -a || true
-# ---------------------------------------------
-
-# Basic packages + ensure repo works
+# Install basic packages + Docker
 apt-get update
 apt-get install -y software-properties-common
-
-# Ensure universe repo
 add-apt-repository -y universe || true
 apt-get update
-
-# Install Docker
 apt-get install -y docker.io
 systemctl enable docker
 systemctl start docker
 
-# App config
-mkdir -p /opt/app
+# --- Create Docker network ---
+docker network inspect zai-net >/dev/null 2>&1 || docker network create zai-net
 
+# --- Start Redis container ---
+docker rm -f redis 2>/dev/null || true
+docker run -d \
+  --name redis \
+  --network zai-net \
+  -p 6379:6379 \
+  redis:7
+
+echo "Redis started at redis://redis:6379 on network 'zai-net'"
+
+# --- App config ---
+mkdir -p /opt/app
 cat <<EOF > /opt/app/.env
-REDIS_URI=${REDIS_URI}
+REDIS_URI=redis://redis:6379
 DB_URI=${DB_URI}
 EOF
 
-# Login & pull
+# --- Login & pull app image ---
 echo "$REGISTRY_PASSWORD" | docker login "$REGISTRY_SERVER" -u "$REGISTRY_USERNAME" --password-stdin
 docker pull "$CONTAINER_IMAGE"
 
-# Restart container
+# --- Start app container ---
 docker rm -f app 2>/dev/null || true
-
 docker run -d \
   --name app \
   --restart always \
   --privileged \
   -v /var/run/docker.sock:/var/run/docker.sock \
   --env-file /opt/app/.env \
+  --network zai-net \
   -p 80:80 \
   -p 8000:8000 \
   -p 60006:60006 \
