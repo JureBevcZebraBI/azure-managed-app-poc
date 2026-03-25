@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+export DEBIAN_FRONTEND=noninteractive
+
 CONTAINER_IMAGE="$1"
 REDIS_URI="$2"
 DB_URI="$3"
@@ -10,13 +12,20 @@ REGISTRY_PASSWORD="$6"
 
 echo "=== Starting setup ==="
 
-if ! command -v docker >/dev/null 2>&1; then
-  apt-get update
-  apt-get install -y docker.io
-  systemctl enable docker
-  systemctl start docker
-fi
+# Basic packages + ensure repo works
+apt-get update
+apt-get install -y software-properties-common
 
+# Ensure universe repo (fixes docker.io not found)
+add-apt-repository -y universe || true
+apt-get update
+
+# Install Docker
+apt-get install -y docker.io
+systemctl enable docker
+systemctl start docker
+
+# App config
 mkdir -p /opt/app
 
 cat <<EOF > /opt/app/.env
@@ -24,13 +33,12 @@ REDIS_URI=${REDIS_URI}
 DB_URI=${DB_URI}
 EOF
 
+# Login & pull
 echo "$REGISTRY_PASSWORD" | docker login "$REGISTRY_SERVER" -u "$REGISTRY_USERNAME" --password-stdin
-
 docker pull "$CONTAINER_IMAGE"
 
-if docker ps -a --format '{{.Names}}' | grep -q '^app$'; then
-  docker rm -f app
-fi
+# Restart container
+docker rm -f app 2>/dev/null || true
 
 docker run -d \
   --name app \
