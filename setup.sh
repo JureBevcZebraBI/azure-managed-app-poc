@@ -36,7 +36,6 @@ echo "Redis started at redis://redis:6379 on network 'zai-net'"
 # --- App config ---
 mkdir -p /opt/app
 cat <<EOF > /opt/app/.env
-REDIS_URI=redis://redis:6379
 DB_URI=${DB_URI}
 EOF
 
