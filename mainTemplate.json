@@ -168,7 +168,7 @@
           "fileUris": [
             "https://raw.githubusercontent.com/JureBevcZebraBI/azure-managed-app-poc/refs/heads/main/setup.sh"
           ],
-          "commandToExecute": "[concat('bash setup.sh \"', parameters('containerImage'), '\" \"', variables('pgConnectionString'), '\" \"', parameters('registryServer'), '\" \"', parameters('registryUsername'), '\" \"', parameters('registryPassword'), '\"')]"
+          "commandToExecute": "[concat('bash setup.sh ', base64(parameters('containerImage')), ' ', base64(variables('pgConnectionString')), ' ', base64(parameters('registryServer')), ' ', base64(parameters('registryUsername')), ' ', base64(parameters('registryPassword')))]"
         }
       }
     }

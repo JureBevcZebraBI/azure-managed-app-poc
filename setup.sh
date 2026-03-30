@@ -3,11 +3,11 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
-CONTAINER_IMAGE="$1"
-DB_URI="$2"
-REGISTRY_SERVER="$3"
-REGISTRY_USERNAME="$4"
-REGISTRY_PASSWORD="$5"
+CONTAINER_IMAGE=$(echo "$1" | base64 -d)
+DB_URI=$(echo "$2" | base64 -d)
+REGISTRY_SERVER=$(echo "$3" | base64 -d)
+REGISTRY_USERNAME=$(echo "$4" | base64 -d)
+REGISTRY_PASSWORD=$(echo "$5" | base64 -d)
 
 echo "=== Starting setup ==="
 
