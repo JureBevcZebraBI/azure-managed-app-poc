@@ -6,50 +6,83 @@
     "adminUsername": { "type": "string" },
     "adminPassword": { "type": "securestring" },
     "containerImage": { "type": "string" },
-    "dbUri": { "type": "string" },
     "registryServer": { "type": "string" },
     "registryUsername": { "type": "string" },
     "registryPassword": { "type": "securestring" }
   },
+  "variables": {
+    "pgServerName": "[concat(parameters('vmName'), '-pg')]",
+    "pgDbName": "appdb",
+    "pgAdminUser": "pgadmin",
+    "pgAdminPassword": "[parameters('adminPassword')]",
+    "pgConnectionString": "[concat('postgresql+psycopg://', variables('pgAdminUser'), ':', variables('pgAdminPassword'), '@', variables('pgServerName'), '.postgres.database.azure.com:5432/', variables('pgDbName'), '?sslmode=require')]"
+  },
   "resources": [
     {
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2023-02-01",
-      "name": "[concat(parameters('vmName'), '-nsg')]",
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+      "apiVersion": "2023-06-01-preview",
+      "name": "[variables('pgServerName')]",
       "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_B1ms",
+        "tier": "Burstable"
+      },
       "properties": {
-        "securityRules": [
-          { "name": "allow-80", "properties": { "priority": 1000, "protocol": "Tcp", "access": "Allow", "direction": "Inbound", "sourceAddressPrefix": "*", "sourcePortRange": "*", "destinationAddressPrefix": "*", "destinationPortRange": "80" } },
-          { "name": "allow-8000", "properties": { "priority": 1010, "protocol": "Tcp", "access": "Allow", "direction": "Inbound", "sourceAddressPrefix": "*", "sourcePortRange": "*", "destinationAddressPrefix": "*", "destinationPortRange": "8000" } },
-          { "name": "allow-60006", "properties": { "priority": 1020, "protocol": "Tcp", "access": "Allow", "direction": "Inbound", "sourceAddressPrefix": "*", "sourcePortRange": "*", "destinationAddressPrefix": "*", "destinationPortRange": "60006" } }
-        ]
+        "administratorLogin": "[variables('pgAdminUser')]",
+        "administratorLoginPassword": "[variables('pgAdminPassword')]",
+        "version": "15",
+        "storage": {
+          "storageSizeGB": 32
+        },
+        "network": {
+          "publicNetworkAccess": "Enabled"
+        }
       }
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/firewallRules",
+      "apiVersion": "2023-06-01-preview",
+      "name": "[concat(variables('pgServerName'), '/AllowAzure')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('pgServerName'))]"
+      ],
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "0.0.0.0"
+      }
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
+      "apiVersion": "2023-06-01-preview",
+      "name": "[concat(variables('pgServerName'), '/', variables('pgDbName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('pgServerName'))]"
+      ],
+      "properties": {}
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2023-02-01",
       "name": "[concat(parameters('vmName'), '-pip')]",
       "location": "[resourceGroup().location]",
-      "properties": { "publicIPAllocationMethod": "Dynamic" }
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2023-02-01",
       "name": "[concat(parameters('vmName'), '-vnet')]",
       "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmName'), '-nsg'))]"
-      ],
       "properties": {
-        "addressSpace": { "addressPrefixes": ["10.0.0.0/16"] },
+        "addressSpace": {
+          "addressPrefixes": ["10.0.0.0/16"]
+        },
         "subnets": [
           {
             "name": "default",
             "properties": {
-              "addressPrefix": "10.0.0.0/24",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmName'), '-nsg'))]"
-              }
+              "addressPrefix": "10.0.0.0/24"
             }
           }
         ]
@@ -89,7 +122,9 @@
         "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'), '-nic'))]"
       ],
       "properties": {
-        "hardwareProfile": { "vmSize": "Standard_B2s" },
+        "hardwareProfile": {
+          "vmSize": "Standard_B2s"
+        },
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
@@ -102,7 +137,9 @@
             "sku": "server",
             "version": "latest"
           },
-          "osDisk": { "createOption": "FromImage" }
+          "osDisk": {
+            "createOption": "FromImage"
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -119,7 +156,9 @@
       "name": "[concat(parameters('vmName'), '/customScript')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]",
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/databases', variables('pgServerName'), variables('pgDbName'))]",
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/firewallRules', variables('pgServerName'), 'AllowAzure')]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -129,7 +168,7 @@
           "fileUris": [
             "https://raw.githubusercontent.com/JureBevcZebraBI/azure-managed-app-poc/refs/heads/main/setup.sh"
           ],
-          "commandToExecute": "[concat('bash setup.sh \"', parameters('containerImage'), '\" \"', parameters('dbUri'), '\" \"', parameters('registryServer'), '\" \"', parameters('registryUsername'), '\" \"', parameters('registryPassword'), '\"')]"
+          "commandToExecute": "[concat('bash setup.sh \"', parameters('containerImage'), '\" \"', variables('pgConnectionString'), '\" \"', parameters('registryServer'), '\" \"', parameters('registryUsername'), '\" \"', parameters('registryPassword'), '\"')]"
         }
       }
     }
