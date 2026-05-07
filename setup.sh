@@ -11,6 +11,22 @@ REGISTRY_PASSWORD=$(echo "$5" | base64 -d)
 
 echo "=== Starting setup ==="
 
+#!/bin/bash
+set -e
+
+echo "=== Waiting for apt lock ==="
+while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+  echo "APT locked, waiting..."
+  sleep 5
+done
+
+while sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+  echo "APT lists locked, waiting..."
+  sleep 5
+done
+
+sudo dpkg --configure -a
+
 # Install basic packages + Docker
 apt-get update
 apt-get install -y software-properties-common
