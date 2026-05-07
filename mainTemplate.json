@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.43.8.12551",
-      "templateHash": "14710674721980081008"
+      "templateHash": "2093226205782647897"
     }
   },
   "parameters": {
@@ -89,13 +89,13 @@
     },
     {
       "type": "Microsoft.Network/privateDnsZones",
-      "apiVersion": "2023-02-01",
+      "apiVersion": "2024-06-01",
       "name": "privatelink.postgres.database.azure.com",
       "location": "global"
     },
     {
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-      "apiVersion": "2023-02-01",
+      "apiVersion": "2024-06-01",
       "name": "[format('{0}/{1}', 'privatelink.postgres.database.azure.com', format('{0}-dns-link', parameters('vmName')))]",
       "location": "global",
       "properties": {

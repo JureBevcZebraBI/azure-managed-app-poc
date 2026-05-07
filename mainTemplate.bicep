@@ -17,7 +17,7 @@ var pgAdminPassword = adminPassword
 var pgConnectionString = 'postgresql+psycopg://${pgAdminUser}:${pgAdminPassword}@${pgServerName}.postgres.database.azure.com:5432/${pgDbName}?sslmode=require'
 
 /* -----------------------
-   NSG (private-only VM)
+   NSG
 ------------------------*/
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
   name: '${vmName}-nsg'
@@ -25,7 +25,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
 }
 
 /* -----------------------
-   VNET + SUBNETS
+   VNET
 ------------------------*/
 resource vnet 'Microsoft.Network/virtualNetworks@2023-02-01' = {
   name: '${vmName}-vnet'
@@ -65,14 +65,14 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-02-01' = {
 }
 
 /* -----------------------
-   PRIVATE DNS ZONE
+   PRIVATE DNS (FIXED API VERSION)
 ------------------------*/
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2023-02-01' = {
+resource privateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
   name: 'privatelink.postgres.database.azure.com'
   location: 'global'
 }
 
-resource dnsLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2023-02-01' = {
+resource dnsLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
   name: '${vmName}-dns-link'
   parent: privateDnsZone
   location: 'global'
@@ -85,7 +85,7 @@ resource dnsLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2023-02-
 }
 
 /* -----------------------
-   POSTGRESQL (PRIVATE)
+   POSTGRESQL (PRIVATE ONLY)
 ------------------------*/
 resource pgServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview' = {
   name: pgServerName
@@ -113,7 +113,7 @@ resource pgServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview'
   ]
 }
 
-/* DNS zone group for PG */
+/* DNS zone group */
 resource pgDnsZoneGroup 'Microsoft.DBforPostgreSQL/flexibleServers/privateDnsZoneGroups@2023-06-01-preview' = {
   name: '${pgServer.name}/default'
   properties: {
@@ -143,7 +143,7 @@ resource pgDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06
 }
 
 /* -----------------------
-   VM (PRIVATE ONLY)
+   VM (NO PUBLIC IP)
 ------------------------*/
 resource nic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
   name: '${vmName}-nic'
