@@ -11,11 +11,15 @@
     "registryPassword": { "type": "securestring" }
   },
   "variables": {
+    "vnetName": "[concat(parameters('vmName'), '-vnet')]",
+    "vmSubnetName": "vm-subnet",
+    "pgSubnetName": "pg-subnet",
     "pgServerName": "[concat(parameters('vmName'), '-pg')]",
     "pgDbName": "appdb",
     "pgAdminUser": "pgadmin",
     "pgAdminPassword": "[parameters('adminPassword')]",
-    "pgConnectionString": "[concat('postgresql+psycopg://', variables('pgAdminUser'), ':', variables('pgAdminPassword'), '@', variables('pgServerName'), '.postgres.database.azure.com:5432/', variables('pgDbName'), '?sslmode=require')]"
+    "pgConnectionString": "[concat('postgresql+psycopg://', variables('pgAdminUser'), ':', variables('pgAdminPassword'), '@', variables('pgServerName'), '.postgres.database.azure.com:5432/', variables('pgDbName'), '?sslmode=require')]",
+    "privateDnsZoneName": "privatelink.postgres.database.azure.com"
   },
   "resources": [
     {
@@ -26,7 +30,7 @@
       "properties": {
         "securityRules": [
           {
-            "name": "AllowFromMyIP",
+            "name": "AllowVnetInBound",
             "properties": {
               "priority": 100,
               "access": "Allow",
@@ -34,7 +38,20 @@
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "*",
-              "sourceAddressPrefix": "94.140.71.34",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "AllowAzureLoadBalancerInBound",
+            "properties": {
+              "priority": 110,
+              "access": "Allow",
+              "direction": "Inbound",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
               "destinationAddressPrefix": "*"
             }
           },
@@ -54,11 +71,80 @@
         ]
       }
     },
+
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-02-01",
+      "name": "[variables('vnetName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmName'), '-nsg'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": ["10.0.0.0/16"]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vmSubnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmName'), '-nsg'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('pgSubnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24",
+              "delegations": [
+                {
+                  "name": "pgDelegation",
+                  "properties": {
+                    "serviceName": "Microsoft.DBforPostgreSQL/flexibleServers"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2023-02-01",
+      "name": "[variables('privateDnsZoneName')]",
+      "location": "global"
+    },
+
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2023-02-01",
+      "name": "[concat(variables('privateDnsZoneName'), '/', variables('vnetName'), '-link')]",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "properties": {
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+        },
+        "registrationEnabled": false
+      }
+    },
+
     {
       "type": "Microsoft.DBforPostgreSQL/flexibleServers",
       "apiVersion": "2023-06-01-preview",
       "name": "[variables('pgServerName')]",
       "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+      ],
       "sku": {
         "name": "Standard_B1ms",
         "tier": "Burstable"
@@ -71,22 +157,13 @@
           "storageSizeGB": 32
         },
         "network": {
-          "publicNetworkAccess": "Enabled"
+          "delegatedSubnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('pgSubnetName'))]",
+          "privateDnsZoneArmResourceId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+          "publicNetworkAccess": "Disabled"
         }
       }
     },
-    {
-      "type": "Microsoft.DBforPostgreSQL/flexibleServers/firewallRules",
-      "apiVersion": "2023-06-01-preview",
-      "name": "[concat(variables('pgServerName'), '/AllowMyIP')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('pgServerName'))]"
-      ],
-      "properties": {
-        "startIpAddress": "94.140.71.34",
-        "endIpAddress": "94.140.71.34"
-      }
-    },
+
     {
       "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
       "apiVersion": "2023-06-01-preview",
@@ -96,48 +173,14 @@
       ],
       "properties": {}
     },
-    {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2023-02-01",
-      "name": "[concat(parameters('vmName'), '-pip')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic"
-      }
-    },
-    {
-      "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2023-02-01",
-      "name": "[concat(parameters('vmName'), '-vnet')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmName'), '-nsg'))]"
-      ],
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": ["10.0.0.0/16"]
-        },
-        "subnets": [
-          {
-            "name": "default",
-            "properties": {
-              "addressPrefix": "10.0.0.0/24",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmName'), '-nsg'))]"
-              }
-            }
-          }
-        ]
-      }
-    },
+
     {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2023-02-01",
       "name": "[concat(parameters('vmName'), '-nic')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'), '-pip'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('vmName'), '-vnet'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -145,16 +188,14 @@
             "name": "ipconfig",
             "properties": {
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', concat(parameters('vmName'), '-vnet'), 'default')]"
-              },
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'), '-pip'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('vmSubnetName'))]"
               }
             }
           }
         ]
       }
     },
+
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2023-03-01",
@@ -192,6 +233,7 @@
         }
       }
     },
+
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2023-03-01",
@@ -199,8 +241,7 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]",
-        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/databases', variables('pgServerName'), variables('pgDbName'))]",
-        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/firewallRules', variables('pgServerName'), 'AllowMyIP')]"
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers/databases', variables('pgServerName'), variables('pgDbName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
