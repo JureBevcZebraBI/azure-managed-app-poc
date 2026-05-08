@@ -16,77 +16,43 @@ var pgAdminPassword = adminPassword
 
 var pgConnectionString = 'postgresql+psycopg://${pgAdminUser}:${pgAdminPassword}@${pgServerName}.postgres.database.azure.com:5432/${pgDbName}?sslmode=require'
 
-/* -----------------------
-   NSG
-------------------------*/
+// NSG
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
   name: '${vmName}-nsg'
   location: resourceGroup().location
-}
-
-/* -----------------------
-   VNET
-------------------------*/
-resource vnet 'Microsoft.Network/virtualNetworks@2023-02-01' = {
-  name: '${vmName}-vnet'
-  location: resourceGroup().location
   properties: {
-    addressSpace: {
-      addressPrefixes: [
-        '10.0.0.0/16'
-      ]
-    }
-    subnets: [
+    securityRules: [
       {
-        name: 'vm-subnet'
+        name: 'AllowFromMyIP'
         properties: {
-          addressPrefix: '10.0.0.0/24'
-          networkSecurityGroup: {
-            id: nsg.id
-          }
+          priority: 100
+          access: 'Allow'
+          direction: 'Inbound'
+          protocol: '*'
+          sourcePortRange: '*'
+          destinationPortRange: '*'
+          sourceAddressPrefix: '94.140.71.34'
+          destinationAddressPrefix: '*'
         }
       }
       {
-        name: 'pg-subnet'
+        name: 'DenyAllInbound'
         properties: {
-          addressPrefix: '10.0.1.0/24'
-          delegations: [
-            {
-              name: 'pgDelegation'
-              properties: {
-                serviceName: 'Microsoft.DBforPostgreSQL/flexibleServers'
-              }
-            }
-          ]
+          priority: 200
+          access: 'Deny'
+          direction: 'Inbound'
+          protocol: '*'
+          sourcePortRange: '*'
+          destinationPortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: '*'
         }
       }
     ]
   }
 }
 
-/* -----------------------
-   PRIVATE DNS (FIXED API VERSION)
-------------------------*/
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
-  name: 'privatelink.postgres.database.azure.com'
-  location: 'global'
-}
-
-resource dnsLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
-  name: '${vmName}-dns-link'
-  parent: privateDnsZone
-  location: 'global'
-  properties: {
-    virtualNetwork: {
-      id: vnet.id
-    }
-    registrationEnabled: false
-  }
-}
-
-/* -----------------------
-   POSTGRESQL (PRIVATE ONLY)
-------------------------*/
+// PostgreSQL Flexible Server
 resource pgServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview' = {
   name: pgServerName
   location: resourceGroup().location
@@ -102,38 +68,24 @@ resource pgServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview'
       storageSizeGB: 32
     }
     network: {
-      publicNetworkAccess: 'Disabled'
-      delegatedSubnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, 'pg-subnet')
-      privateDnsZoneArmResourceId: privateDnsZone.id
+      publicNetworkAccess: 'Enabled'
     }
   }
-  dependsOn: [
-    vnet
-    privateDnsZone
-  ]
 }
 
-/* DNS zone group */
-resource pgDnsZoneGroup 'Microsoft.DBforPostgreSQL/flexibleServers/privateDnsZoneGroups@2023-06-01-preview' = {
-  name: '${pgServer.name}/default'
+// Firewall rule
+resource pgFirewall 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2023-06-01-preview' = {
+  name: '${pgServer.name}/AllowMyIP'
   properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'default'
-        properties: {
-          privateDnsZoneId: privateDnsZone.id
-        }
-      }
-    ]
+    startIpAddress: '94.140.71.34'
+    endIpAddress: '94.140.71.34'
   }
   dependsOn: [
     pgServer
   ]
 }
 
-/* -----------------------
-   DATABASE
-------------------------*/
+// Database
 resource pgDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06-01-preview' = {
   name: '${pgServer.name}/${pgDbName}'
   properties: {}
@@ -142,19 +94,35 @@ resource pgDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06
   ]
 }
 
-/* -----------------------
-   VM (NO PUBLIC IP)
-------------------------*/
-resource nic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
-  name: '${vmName}-nic'
+// Public IP
+resource pip 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
+  name: '${vmName}-pip'
   location: resourceGroup().location
   properties: {
-    ipConfigurations: [
+    publicIPAllocationMethod: 'Dynamic'
+  }
+}
+
+// VNet
+resource vnet 'Microsoft.Network/virtualNetworks@2023-02-01' = {
+  name: '${vmName}-vnet'
+  location: resourceGroup().location
+  dependsOn: [
+    nsg
+  ]
+  properties: {
+    addressSpace: {
+      addressPrefixes: [
+        '10.0.0.0/16'
+      ]
+    }
+    subnets: [
       {
-        name: 'ipconfig'
+        name: 'default'
         properties: {
-          subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, 'vm-subnet')
+          addressPrefix: '10.0.0.0/24'
+          networkSecurityGroup: {
+            id: nsg.id
           }
         }
       }
@@ -162,6 +130,32 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
   }
 }
 
+// NIC
+resource nic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
+  name: '${vmName}-nic'
+  location: resourceGroup().location
+  dependsOn: [
+    pip
+    vnet
+  ]
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'ipconfig'
+        properties: {
+          subnet: {
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, 'default')
+          }
+          publicIPAddress: {
+            id: pip.id
+          }
+        }
+      }
+    ]
+  }
+}
+
+// VM
 resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
   name: vmName
   location: resourceGroup().location
@@ -198,15 +192,14 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
   }
 }
 
-/* -----------------------
-   VM EXTENSION
-------------------------*/
+// VM Extension
 resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = {
   name: '${vm.name}/customScript'
   location: resourceGroup().location
   dependsOn: [
     vm
     pgDatabase
+    pgFirewall
   ]
   properties: {
     publisher: 'Microsoft.Azure.Extensions'
