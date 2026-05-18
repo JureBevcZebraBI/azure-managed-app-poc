@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.43.8.12551",
-      "templateHash": "12648042487749722254"
+      "templateHash": "14983883765050081996"
     }
   },
   "parameters": {
@@ -111,6 +111,18 @@
       "properties": {
         "startIpAddress": "94.140.71.34",
         "endIpAddress": "94.140.71.34"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('pgServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/firewallRules",
+      "apiVersion": "2023-06-01-preview",
+      "name": "[format('{0}/AllowVNet', variables('pgServerName'))]",
+      "properties": {
+        "startIpAddress": "10.0.0.0",
+        "endIpAddress": "10.0.0.255"
       },
       "dependsOn": [
         "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('pgServerName'))]"

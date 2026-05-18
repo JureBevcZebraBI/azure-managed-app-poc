@@ -85,6 +85,18 @@ resource pgFirewall 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@202
   ]
 }
 
+// Allow VM subnet (VNet range)
+resource pgFirewallVnet 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2023-06-01-preview' = {
+  name: '${pgServer.name}/AllowVNet'
+  properties: {
+    startIpAddress: '10.0.0.0'
+    endIpAddress: '10.0.0.255'
+  }
+  dependsOn: [
+    pgServer
+  ]
+}
+
 // Database
 resource pgDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06-01-preview' = {
   name: '${pgServer.name}/${pgDbName}'
