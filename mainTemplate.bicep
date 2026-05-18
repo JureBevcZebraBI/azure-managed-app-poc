@@ -192,6 +192,14 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
   }
 }
 
+var vmPayload = {
+  containerImage: containerImage
+  pgConnectionString: pgConnectionString
+  registryServer: registryServer
+  registryUsername: registryUsername
+  registryPassword: registryPassword
+}
+
 // VM Extension
 resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = {
   name: '${vm.name}/customScript'
@@ -209,7 +217,7 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' =
       fileUris: [
         'https://raw.githubusercontent.com/JureBevcZebraBI/azure-managed-app-poc/refs/heads/main/setup.sh'
       ]
-      commandToExecute: 'bash setup.sh ${base64(containerImage)} ${base64(pgConnectionString)} ${base64(registryServer)} ${base64(registryUsername)} ${base64(registryPassword)}'
+      commandToExecute: 'bash setup.sh ${base64(string(vmPayload))}'
     }
   }
 }

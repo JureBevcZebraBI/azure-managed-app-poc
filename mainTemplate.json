@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.43.8.12551",
-      "templateHash": "3223961606932742861"
+      "templateHash": "12648042487749722254"
     }
   },
   "parameters": {
@@ -37,7 +37,14 @@
     "pgDbName": "appdb",
     "pgAdminUser": "pgadmin",
     "pgAdminPassword": "[parameters('adminPassword')]",
-    "pgConnectionString": "[format('postgresql+psycopg://{0}:{1}@{2}.postgres.database.azure.com:5432/{3}?sslmode=require', variables('pgAdminUser'), variables('pgAdminPassword'), variables('pgServerName'), variables('pgDbName'))]"
+    "pgConnectionString": "[format('postgresql+psycopg://{0}:{1}@{2}.postgres.database.azure.com:5432/{3}?sslmode=require', variables('pgAdminUser'), variables('pgAdminPassword'), variables('pgServerName'), variables('pgDbName'))]",
+    "vmPayload": {
+      "containerImage": "[parameters('containerImage')]",
+      "pgConnectionString": "[variables('pgConnectionString')]",
+      "registryServer": "[parameters('registryServer')]",
+      "registryUsername": "[parameters('registryUsername')]",
+      "registryPassword": "[parameters('registryPassword')]"
+    }
   },
   "resources": [
     {
@@ -229,7 +236,7 @@
           "fileUris": [
             "https://raw.githubusercontent.com/JureBevcZebraBI/azure-managed-app-poc/refs/heads/main/setup.sh"
           ],
-          "commandToExecute": "[format('bash setup.sh {0} {1} {2} {3} {4}', base64(parameters('containerImage')), base64(variables('pgConnectionString')), base64(parameters('registryServer')), base64(parameters('registryUsername')), base64(parameters('registryPassword')))]"
+          "commandToExecute": "[format('bash setup.sh {0}', base64(string(variables('vmPayload'))))]"
         }
       },
       "dependsOn": [

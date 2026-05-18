@@ -3,16 +3,15 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
-CONTAINER_IMAGE=$(echo "$1" | base64 -d)
-DB_URI=$(echo "$2" | base64 -d)
-REGISTRY_SERVER=$(echo "$3" | base64 -d)
-REGISTRY_USERNAME=$(echo "$4" | base64 -d)
-REGISTRY_PASSWORD=$(echo "$5" | base64 -d)
+PAYLOAD=$(echo "$1" | base64 -d)
+
+CONTAINER_IMAGE=$(echo "$PAYLOAD" | jq -r '.containerImage')
+DB_URI=$(echo "$PAYLOAD" | jq -r '.pgConnectionString')
+REGISTRY_SERVER=$(echo "$PAYLOAD" | jq -r '.registryServer')
+REGISTRY_USERNAME=$(echo "$PAYLOAD" | jq -r '.registryUsername')
+REGISTRY_PASSWORD=$(echo "$PAYLOAD" | jq -r '.registryPassword')
 
 echo "=== Starting setup ==="
-
-#!/bin/bash
-set -e
 
 echo "=== Waiting for apt lock ==="
 while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
