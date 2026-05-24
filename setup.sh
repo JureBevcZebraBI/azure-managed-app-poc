@@ -28,7 +28,7 @@ sudo dpkg --configure -a
 
 # Install basic packages + Docker
 apt-get update
-apt-get install -y software-properties-common
+apt-get install -y software-properties-common openssl
 add-apt-repository -y universe || true
 apt-get update
 apt-get install -y docker.io
@@ -51,6 +51,7 @@ echo "Redis started at redis://redis:6379 on network 'zai-net'"
 # --- App config ---
 mkdir -p /opt/app
 cat <<EOF > /opt/app/.env
+APP_JWT_SECRET=$(openssl rand -hex 64)
 DB_URI=${DB_URI}
 EOF
 
