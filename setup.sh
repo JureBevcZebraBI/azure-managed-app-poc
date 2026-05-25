@@ -10,6 +10,7 @@ DB_URI=$(echo "$PAYLOAD" | jq -r '.pgConnectionString')
 REGISTRY_SERVER=$(echo "$PAYLOAD" | jq -r '.registryServer')
 REGISTRY_USERNAME=$(echo "$PAYLOAD" | jq -r '.registryUsername')
 REGISTRY_PASSWORD=$(echo "$PAYLOAD" | jq -r '.registryPassword')
+PUBLISHER_SECRET=$(echo "$PAYLOAD" | jq -r '.publisherSecret')
 
 echo "=== Starting setup ==="
 
@@ -53,6 +54,7 @@ mkdir -p /opt/app
 cat <<EOF > /opt/app/.env
 APP_JWT_SECRET=$(openssl rand -hex 64)
 DB_URI=${DB_URI}
+PUBLISHER_SECRET=${PUBLISHER_SECRET}
 EOF
 
 # --- Login & pull app image ---

@@ -254,40 +254,18 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
   }
 }
 
-// =========================
-// VM Setup Payload
-// =========================
-
-var vmPayload = {
-  containerImage: containerImage
-  pgConnectionString: pgConnectionString
-  registryServer: registryServer
-  registryUsername: registryUsername
-  registryPassword: registryPassword
-}
-
-// =========================
-// Custom Script Extension
-// =========================
-
-resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2023-03-01' = {
-  name: '${vm.name}/customScript'
-  location: location
-
-  properties: {
-    publisher: 'Microsoft.Azure.Extensions'
-    type: 'CustomScript'
-    typeHandlerVersion: '2.1'
-
-    settings: {
-      fileUris: [
-        'https://raw.githubusercontent.com/JureBevcZebraBI/azure-managed-app-poc/main/setup.sh'
-      ]
-
-      commandToExecute: 'bash setup.sh ${base64(string(vmPayload))}'
-    }
+// Replace your old vmExtension block in your main template with this:
+module secretFetchAndExtension './nestedDeployment.bicep' = {
+  name: 'nestedSecretFetchDeployment'
+  params: {
+    location: location
+    vmName: vmName
+    containerImage: containerImage
+    pgConnectionString: pgConnectionString
+    registryServer: registryServer
+    registryUsername: registryUsername
+    registryPassword: registryPassword
   }
-
   dependsOn: [
     vm
     pgDatabase
