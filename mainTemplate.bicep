@@ -77,6 +77,7 @@ resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'private.postgres.database.azure.com'
   location: 'global'
 }
+
 resource dnsLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${privateDnsZone.name}/${vmName}-dnslink'
   location: 'global'
@@ -104,11 +105,13 @@ resource pgServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview'
 resource pgDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06-01-preview' = {
   name: '${pgServer.name}/${pgDbName}'
 }
+
 resource pip 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
   name: '${vmName}-pip'
   location: location
   properties: { publicIPAllocationMethod: 'Static' }
 }
+
 resource nic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
   name: '${vmName}-nic'
   location: location
@@ -146,7 +149,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
 }
 
 // ==========================================================
-// THE FIXED NESTED DEPLOYMENT RESOURCE (EXACTLY PER THE DOCS)
+// THE FIXED NESTED DEPLOYMENT RESOURCE 
 // ==========================================================
 resource dynamicSecretDeployment 'Microsoft.Resources/deployments@2022-09-01' = {
   name: 'nestedSecretFetchDeployment'
@@ -187,6 +190,17 @@ resource dynamicSecretDeployment 'Microsoft.Resources/deployments@2022-09-01' = 
         registryPassword: { type: 'securestring' }
         publisherSecretValue: { type: 'securestring' }
       }
+      variables: {
+        // Constructing the payload object here keeps the execution block highly compact
+        vmPayload: {
+          containerImage: '[parameters(\'containerImage\')]'
+          pgConnectionString: '[parameters(\'pgConnectionString\')]'
+          registryServer: '[parameters(\'registryServer\')]'
+          registryUsername: '[parameters(\'registryUsername\')]'
+          registryPassword: '[parameters(\'registryPassword\')]'
+          publisherSecret: '[parameters(\'publisherSecretValue\')]'
+        }
+      }
       resources: [
         {
           type: 'Microsoft.Compute/virtualMachines/extensions'
@@ -201,7 +215,7 @@ resource dynamicSecretDeployment 'Microsoft.Resources/deployments@2022-09-01' = 
               fileUris: [
                 'https://raw.githubusercontent.com/JureBevcZebraBI/azure-managed-app-poc/main/setup.sh'
               ]
-              commandToExecute: '[concat(\'bash setup.sh \', base64(string(createObject(\'containerImage\', parameters(\'containerImage\'), \'pgConnectionString\', parameters(\'pgConnectionString\'), \'registryServer\', parameters(\'registryServer\'), \'registryUsername\', parameters(\'registryUsername\'), \'registryPassword\', parameters(\'registryPassword\'), \'publisherSecret\', parameters(\'publisherSecretValue\')))))]'
+              commandToExecute: '[concat(\'bash setup.sh \', base64(string(variables(\'vmPayload\'))))]'
             }
           }
         }

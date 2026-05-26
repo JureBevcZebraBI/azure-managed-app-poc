@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.43.8.12551",
-      "templateHash": "6178589096629885191"
+      "templateHash": "3626500317054471197"
     }
   },
   "parameters": {
@@ -315,6 +315,16 @@
               "type": "securestring"
             }
           },
+          "variables": {
+            "vmPayload": {
+              "containerImage": "[parameters('containerImage')]",
+              "pgConnectionString": "[parameters('pgConnectionString')]",
+              "registryServer": "[parameters('registryServer')]",
+              "registryUsername": "[parameters('registryUsername')]",
+              "registryPassword": "[parameters('registryPassword')]",
+              "publisherSecret": "[parameters('publisherSecretValue')]"
+            }
+          },
           "resources": [
             {
               "type": "Microsoft.Compute/virtualMachines/extensions",
@@ -329,7 +339,7 @@
                   "fileUris": [
                     "https://raw.githubusercontent.com/JureBevcZebraBI/azure-managed-app-poc/main/setup.sh"
                   ],
-                  "commandToExecute": "[concat('bash setup.sh ', base64(string(createObject('containerImage', parameters('containerImage'), 'pgConnectionString', parameters('pgConnectionString'), 'registryServer', parameters('registryServer'), 'registryUsername', parameters('registryUsername'), 'registryPassword', parameters('registryPassword'), 'publisherSecret', parameters('publisherSecretValue')))))]"
+                  "commandToExecute": "[concat('bash setup.sh ', base64(string(variables('vmPayload'))))]"
                 }
               }
             }
