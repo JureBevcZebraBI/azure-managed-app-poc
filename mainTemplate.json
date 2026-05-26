@@ -319,8 +319,8 @@
             {
               "type": "Microsoft.Compute/virtualMachines/extensions",
               "apiVersion": "2023-03-01",
-              "name": "[[concat(parameters('vmName'), '/customScript')]",
-              "location": "[[parameters('location')]",
+              "name": "[concat(parameters('vmName'), '/customScript')]",
+              "location": "[parameters('location')]",
               "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
                 "type": "CustomScript",
@@ -329,7 +329,7 @@
                   "fileUris": [
                     "https://raw.githubusercontent.com/JureBevcZebraBI/azure-managed-app-poc/main/setup.sh"
                   ],
-                  "commandToExecute": "[[concat('bash setup.sh ', base64(string(createObject('containerImage', parameters('containerImage'), 'pgConnectionString', parameters('pgConnectionString'), 'registryServer', parameters('registryServer'), 'registryUsername', parameters('registryUsername'), 'registryPassword', parameters('registryPassword'), 'publisherSecret', parameters('publisherSecretValue')))))]"
+                  "commandToExecute": "[concat('bash setup.sh ', base64(string(createObject('containerImage', parameters('containerImage'), 'pgConnectionString', parameters('pgConnectionString'), 'registryServer', parameters('registryServer'), 'registryUsername', parameters('registryUsername'), 'registryPassword', parameters('registryPassword'), 'publisherSecret', parameters('publisherSecretValue')))))]"
                 }
               }
             }
