@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.43.8.12551",
-      "templateHash": "3608028725051931757"
+      "templateHash": "6178589096629885191"
     }
   },
   "parameters": {
@@ -42,7 +42,11 @@
     "pgAdminUser": "pgadmin",
     "pgAdminPassword": "[parameters('adminPassword')]",
     "pgHost": "[format('{0}.postgres.database.azure.com', variables('pgServerName'))]",
-    "pgConnectionString": "[format('postgresql+psycopg://{0}:{1}@{2}:5432/{3}?sslmode=require', variables('pgAdminUser'), variables('pgAdminPassword'), variables('pgHost'), variables('pgDbName'))]"
+    "pgConnectionString": "[format('postgresql+psycopg://{0}:{1}@{2}:5432/{3}?sslmode=require', variables('pgAdminUser'), variables('pgAdminPassword'), variables('pgHost'), variables('pgDbName'))]",
+    "publisherSubId": "51fe1c79-235d-42fc-b52f-b853dd080e58",
+    "publisherRgName": "ZebraAIGeneral",
+    "keyVaultName": "kv-zai-managed-app",
+    "secretName": "TestSecret"
   },
   "resources": [
     {
@@ -244,13 +248,13 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2025-04-01",
+      "apiVersion": "2022-09-01",
       "name": "nestedSecretFetchDeployment",
       "properties": {
+        "mode": "Incremental",
         "expressionEvaluationOptions": {
           "scope": "inner"
         },
-        "mode": "Incremental",
         "parameters": {
           "location": {
             "value": "[variables('location')]"
@@ -272,18 +276,19 @@
           },
           "registryPassword": {
             "value": "[parameters('registryPassword')]"
+          },
+          "publisherSecretValue": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId(variables('publisherSubId'), variables('publisherRgName'), 'Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+              },
+              "secretName": "[variables('secretName')]"
+            }
           }
         },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.43.8.12551",
-              "templateHash": "14229062649083812995"
-            }
-          },
           "parameters": {
             "location": {
               "type": "string"
@@ -305,20 +310,17 @@
             },
             "registryPassword": {
               "type": "securestring"
+            },
+            "publisherSecretValue": {
+              "type": "securestring"
             }
-          },
-          "variables": {
-            "publisherSubId": "51fe1c79-235d-42fc-b52f-b853dd080e58",
-            "publisherRgName": "ZebraAIGeneral",
-            "keyVaultName": "kv-zai-managed-app",
-            "secretName": "TestSecret"
           },
           "resources": [
             {
               "type": "Microsoft.Compute/virtualMachines/extensions",
               "apiVersion": "2023-03-01",
-              "name": "[format('{0}/{1}', parameters('vmName'), 'customScript')]",
-              "location": "[parameters('location')]",
+              "name": "[[concat(parameters('vmName'), '/customScript')]",
+              "location": "[[parameters('location')]",
               "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
                 "type": "CustomScript",
@@ -327,7 +329,7 @@
                   "fileUris": [
                     "https://raw.githubusercontent.com/JureBevcZebraBI/azure-managed-app-poc/main/setup.sh"
                   ],
-                  "commandToExecute": "[format('bash setup.sh {0}', base64(string(createObject('containerImage', parameters('containerImage'), 'pgConnectionString', parameters('pgConnectionString'), 'registryServer', parameters('registryServer'), 'registryUsername', parameters('registryUsername'), 'registryPassword', parameters('registryPassword'), 'publisherSecret', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('publisherSubId'), variables('publisherRgName')), 'Microsoft.KeyVault/vaults/secrets', split(format('{0}/{1}', variables('keyVaultName'), variables('secretName')), '/')[0], split(format('{0}/{1}', variables('keyVaultName'), variables('secretName')), '/')[1]), '2023-07-01').value))))]"
+                  "commandToExecute": "[[concat('bash setup.sh ', base64(string(createObject('containerImage', parameters('containerImage'), 'pgConnectionString', parameters('pgConnectionString'), 'registryServer', parameters('registryServer'), 'registryUsername', parameters('registryUsername'), 'registryPassword', parameters('registryPassword'), 'publisherSecret', parameters('publisherSecretValue')))))]"
                 }
               }
             }
